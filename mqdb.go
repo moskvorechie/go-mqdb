@@ -48,7 +48,7 @@ func Close() {
 func Connect() {
 	dbLink := GetLInk()
 	var err error
-	DB, err = gorm.Open("postgres", dbLink)
+	DB, err = gorm.Open("mysql", dbLink)
 	DB.LogMode(Debug)
 	if err != nil {
 		panic(err.Error())
