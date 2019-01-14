@@ -12,49 +12,64 @@ var Pass string
 var Host string
 var Port string
 var Name string
-var Ping int
+
 var Debug bool
+var PingEachMinute int
+var MaxIdleConns int
+var MaxOpenConns int
 
 var DB *gorm.DB
 var lastPing time.Time
+var err error
 
-func New() *gorm.DB {
-
-	if Ping <= 0 {
-		Ping = 1
-	}
-
+func New() (*gorm.DB, error) {
 	if DB == nil {
-		Connect()
+		DB, err = Connect()
+		if err != nil {
+			return DB, err
+		}
 		return New()
 	}
-	if time.Now().After(lastPing.Add(time.Duration(Ping) * time.Minute)) {
+	if PingEachMinute > 0 && time.Now().After(lastPing.Add(time.Duration(PingEachMinute)*time.Minute)) {
 		lastPing = time.Now()
 		err := DB.DB().Ping()
 		if err != nil {
-			DB.Close()
-			Connect()
+			err = DB.Close()
+			if err != nil {
+				return DB, err
+			}
+			DB, err = Connect()
+			if err != nil {
+				return DB, err
+			}
 			return New()
 		}
 	}
 
-	return DB
+	return DB, nil
 }
 
-func Close() {
-	DB.Close()
-}
-
-func Connect() {
+func Connect() (*gorm.DB, error) {
 	dbLink := GetLInk()
 	var err error
 	DB, err = gorm.Open("mysql", dbLink)
 	DB.LogMode(Debug)
 	if err != nil {
-		panic(err.Error())
+		return DB, err
 	}
-	DB.DB().SetMaxIdleConns(100)
-	DB.DB().SetMaxOpenConns(1000)
+	DB.DB().SetMaxIdleConns(MaxIdleConns)
+	DB.DB().SetMaxOpenConns(MaxOpenConns)
+
+	return DB, nil
+}
+
+func Close() error {
+	err = DB.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetLInk() string {
