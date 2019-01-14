@@ -1,4 +1,4 @@
-module github.com/vmpartner/go-mqdb
+module github.com/vmpartner/go-mqdb.v2
 
 require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
