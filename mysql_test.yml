@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-mqdb
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: go-mqdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: go-mqdb
+            - name: MYSQL_USER
+              value: go-mqdb
+            - name: MYSQL_PASSWORD
+              value: go-mqdb
+            - name: MYSQL_ROOT_PASSWORD
+              value: go-mqdb
+            - name: TZ
+              value: "Europe/Moscow"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: go-mqdb
+spec:
+  type: NodePort
+  ports:
+    - nodePort: 30007
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+  selector:
+    app: mysql

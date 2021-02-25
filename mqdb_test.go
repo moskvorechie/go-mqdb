@@ -1,15 +1,14 @@
-# MySQL connect module
+package mqdb_test
 
-Connection module to MySQL database
+import (
+	"github.com/moskvorechie/go-mqdb/v3"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"testing"
+	"time"
+)
 
-## Usage example
-
-```golang
-package main
-
-import "github.com/moskvorechie/go-mqdb/v3"
-
-func main() {
+func TestNew(t *testing.T) {
 
 	// Open connection
 	db, err := mqdb.New(mqdb.Config{
@@ -20,13 +19,13 @@ func main() {
 		Pass: "go-mqdb",
 	})
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	// Check query
-	err = db.Exec("SHOW DATABASES").Error
+	err = db.Exec(`SHOW DATABASES`).Error
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	// Create table
@@ -39,36 +38,49 @@ func main() {
 	user := User{Name: "test", Age: 18, Birthday: time.Now()}
 	err = db.AutoMigrate(&user)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	// Truncate
-	err = db.Exec("TRUNCATE TABLE users").Error
+	err = db.Exec(`TRUNCATE TABLE users`).Error
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	// Create user
 	err = db.Create(&user).Error
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	if user.ID <= 0 {
-		panic("bad user")
+		t.Fatal()
 	}
 
 	// Get user
 	user = User{}
 	err = db.First(&user, "name = ? AND age = ?", "test", 18).Error
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	// Drop user
 	err = db.Delete(&user).Error
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
+	}
+
+	// Close check
+	bb, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = bb.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	db.Logger = logger.Default.LogMode(logger.Silent)
+	err = db.Exec(`SHOW DATABASES`).Error
+	if err == nil {
+		t.Fatal(err)
 	}
 }
-
-```
